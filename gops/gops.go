@@ -34,18 +34,20 @@ type ProcInfo struct {
 	Pids []int   `json:"pids"`
 	Rss  int     `json:"rss"`
 	PCpu float64 `json:"pcpu"`
+	Uptime string `json:"uptime"`
 }
 
 func (pi *ProcInfo) Add(add ProcInfo) {
 	pi.Rss += add.Rss
 	pi.PCpu += add.PCpu
+	pi.Uptime +=add.Uptime
 }
 
 // CPU Percent * 100
 // only linux and darwin works
 func (p *Process) ProcInfo() (pi ProcInfo, err error) {
 	pi.Pid = p.Pid()
-	cmd := exec.Command("ps", "-o", "pcpu,rss", "-p", strconv.Itoa(p.Pid()))
+	cmd := exec.Command("ps", "-o", "pcpu,rss,etime", "-p", strconv.Itoa(p.Pid()))
 	output, err := cmd.Output()
 	if err != nil {
 		err = errors.New("ps err: " + err.Error())
@@ -57,7 +59,7 @@ func (p *Process) ProcInfo() (pi ProcInfo, err error) {
 		err = errors.New("parse ps command out format error")
 		return
 	}
-	_, err = fmt.Sscanf(fields[1], "%f %d", &pi.PCpu, &pi.Rss)
+	_, err = fmt.Sscanf(fields[1], "%f %d %s", &pi.PCpu, &pi.Rss,&pi.Uptime)
 	pi.Rss *= 1024
 	return
 }

@@ -23,8 +23,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/qiniu/log"
 	_ "github.com/shurcooL/vfsgen"
-	"github.com/soopsio/gosuv/gops"
-	"github.com/soopsio/kexec"
+	"github.com/elyChan/gosuv/gops"
+	"github.com/elyChan/kexec"
 )
 
 var defaultGosuvDir string

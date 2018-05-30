@@ -5,6 +5,7 @@ var vm = new Vue({
         name: name,
         pid: '-',
         childPids: [],
+        uptime:'',
     }
 });
 
@@ -21,6 +22,7 @@ var ws = newWebsocket(requstUrl, {
         var data = JSON.parse(evt.data);
         vm.pid = data.pid;
         vm.childPids = data.pids;
+        vm.uptime=data.uptime;
         console.log("pid", data.pid, data); //evt.data.pid);
         if (memData && data.rss) {
             memData.push({
