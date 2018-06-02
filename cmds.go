@@ -38,7 +38,20 @@ func postForm(pathname string, data url.Values) (r JSONResponse, err error) {
 }
 
 func actionStartServer(c *cli.Context) error {
-	suv, hdlr, err := newSupervisorHandler()
+	host :=cfg.Client.ServerURL;
+	u, err := url.Parse(host)
+	var thehost string
+	if err != nil {
+		fmt.Print("地址出错");
+		thehost="127.0.0.1"
+	} else {
+		h := strings.Split(u.Host, ":")
+		fmt.Println(h[0])
+		thehost=h[0];
+	}
+	log.Printf("the host ===%s",thehost)
+
+	suv, hdlr, err := newSupervisorHandler(thehost)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,11 +63,11 @@ func actionStartServer(c *cli.Context) error {
 	}
 
 	auth := cfg.Server.HttpAuth
+
 	if auth.Enabled {
 		hdlr = httpauth.SimpleBasicAuth(auth.User, auth.Password)(hdlr)
 	}
 	http.Handle("/", hdlr)
-
 	addr := cfg.Server.Addr
 	if c.Bool("foreground") {
 		suv.AutoStartPrograms()
@@ -210,7 +223,17 @@ func actionReload(c *cli.Context) error {
 }
 
 func actionConfigTest(c *cli.Context) error {
-	if _, _, err := newSupervisorHandler(); err != nil {
+	host :=cfg.Client.ServerURL;
+	u, err := url.Parse(host)
+	var thehost string
+	if err != nil {
+		fmt.Print("地址出错");
+		thehost="127.0.0.1"
+	} else {
+		thehost=u.Host
+	}
+	fmt.Printf("the host ===%s",thehost)
+	if _, _, err := newSupervisorHandler(thehost); err != nil {
 		log.Fatal(err)
 	}
 	log.Println("test is successful")

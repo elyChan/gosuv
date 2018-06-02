@@ -647,7 +647,7 @@ func (s *Supervisor) AutoStartPrograms() {
 	}
 }
 
-func newSupervisorHandler() (suv *Supervisor, hdlr http.Handler, err error) {
+func newSupervisorHandler( host string) (suv *Supervisor, hdlr http.Handler, err error) {
 	suv = &Supervisor{
 		ConfigDir: filepath.Join(defaultGosuvDir, "conf"),
 		pgMap:     make(map[string]Program, 0),
@@ -660,26 +660,26 @@ func newSupervisorHandler() (suv *Supervisor, hdlr http.Handler, err error) {
 	suv.catchExitSignal()
 
 	r := mux.NewRouter()
-	r.HandleFunc("/", suv.hIndex)
-	r.HandleFunc("/settings/{name}", suv.hSetting)
+	s:=r.Host(host).Subrouter()
+	s.HandleFunc("/", suv.hIndex)
+	s.HandleFunc("/settings/{name}", suv.hSetting)
+	s.HandleFunc("/api/status", suv.hStatus)
+	s.HandleFunc("/api/shutdown", suv.hShutdown).Methods("POST")
+	s.HandleFunc("/api/reload", suv.hReload).Methods("POST")
 
-	r.HandleFunc("/api/status", suv.hStatus)
-	r.HandleFunc("/api/shutdown", suv.hShutdown).Methods("POST")
-	r.HandleFunc("/api/reload", suv.hReload).Methods("POST")
+	s.HandleFunc("/api/programs", suv.hGetProgramList).Methods("GET")
+	s.HandleFunc("/api/programs/{name}", suv.hGetProgram).Methods("GET")
+	s.HandleFunc("/api/programs/{name}", suv.hDelProgram).Methods("DELETE")
+	s.HandleFunc("/api/programs/{name}", suv.hUpdateProgram).Methods("PUT")
+	s.HandleFunc("/api/programs", suv.hAddProgram).Methods("POST")
+	s.HandleFunc("/api/programs/{name}/start", suv.hStartProgram).Methods("POST")
+	s.HandleFunc("/api/programs/{name}/stop", suv.hStopProgram).Methods("POST")
 
-	r.HandleFunc("/api/programs", suv.hGetProgramList).Methods("GET")
-	r.HandleFunc("/api/programs/{name}", suv.hGetProgram).Methods("GET")
-	r.HandleFunc("/api/programs/{name}", suv.hDelProgram).Methods("DELETE")
-	r.HandleFunc("/api/programs/{name}", suv.hUpdateProgram).Methods("PUT")
-	r.HandleFunc("/api/programs", suv.hAddProgram).Methods("POST")
-	r.HandleFunc("/api/programs/{name}/start", suv.hStartProgram).Methods("POST")
-	r.HandleFunc("/api/programs/{name}/stop", suv.hStopProgram).Methods("POST")
+	s.HandleFunc("/ws/events", suv.wsEvents)
+	s.HandleFunc("/ws/logs/{name}", suv.wsLog)
+	s.HandleFunc("/ws/perfs/{name}", suv.wsPerf)
 
-	r.HandleFunc("/ws/events", suv.wsEvents)
-	r.HandleFunc("/ws/logs/{name}", suv.wsLog)
-	r.HandleFunc("/ws/perfs/{name}", suv.wsPerf)
-
-	r.HandleFunc("/webhooks/{name}/{category}", suv.hWebhook).Methods("POST")
+	s.HandleFunc("/webhooks/{name}/{category}", suv.hWebhook).Methods("POST")
 
 	return suv, r, nil
 }
