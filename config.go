@@ -23,6 +23,7 @@ type Configuration struct {
 
 	Client struct {
 		ServerURL string `yaml:"server_url"`
+		ServerHOST string `yaml:"server_host"`
 	}
 }
 
